@@ -18,7 +18,7 @@ public:
 	UMainMovementComponent();
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VALUE")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Sprinting")
 	float SprintMultiplier = 2.f;
 
 	float DefaultMaxWalkSpeed = 0.f;
@@ -37,4 +37,8 @@ private:
 
 private:
 	void UpdateSpeed();
+
+public:
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool GetIsSprinting() const { return bIsSprinting; }
 };

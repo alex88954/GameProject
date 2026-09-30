@@ -25,11 +25,11 @@ void AMainPlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 
 	// Get Enhanced Input subsystem
-	UEnhancedInputLocalPlayerSubsystem* EnhancedInputSubSystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
-	if (!EnhancedInputSubSystem) return;
+	auto* Subsystem = GetEnhancedInputSubsystem();
+	if (!Subsystem) return;
 
 	// Apply InputMappingContext
-	EnhancedInputSubSystem->AddMappingContext(MainInputContext, 0);
+	Subsystem->AddMappingContext(MainInputContext, 0);
 
 	// Get Enhanced Input Component
 	auto* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
@@ -37,10 +37,19 @@ void AMainPlayerController::SetupInputComponent()
 
 	// Bind Actions
 	EnhancedInputComponent->BindAction(IAMove, ETriggerEvent::Triggered, this, &AMainPlayerController::Move);
-	EnhancedInputComponent->BindAction(IALook, ETriggerEvent::Triggered, this, &AMainPlayerController::Look);
 	EnhancedInputComponent->BindAction(IAJump, ETriggerEvent::Triggered, this, &AMainPlayerController::Jump);
 	EnhancedInputComponent->BindAction(IASprint, ETriggerEvent::Triggered, this, &AMainPlayerController::Sprint);
 
+	EnhancedInputComponent->BindAction(IARightClickLook, ETriggerEvent::Triggered, this, &AMainPlayerController::ActivateLook);
+
+	EnhancedInputComponent->BindAction(IALook, ETriggerEvent::Triggered, this, &AMainPlayerController::Look);
+}
+
+UEnhancedInputLocalPlayerSubsystem* AMainPlayerController::GetEnhancedInputSubsystem()
+{
+	UEnhancedInputLocalPlayerSubsystem* EnhancedPlayerSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+	if (!EnhancedPlayerSubsystem) return nullptr;
+	return EnhancedPlayerSubsystem;
 }
 
 void AMainPlayerController::Move(const FInputActionValue& Input)
@@ -87,6 +96,23 @@ void AMainPlayerController::Look(const FInputActionValue& Input)
 	}
 }
 
+void AMainPlayerController::ActivateLook(const FInputActionValue& Input)
+{
+	auto* Subsystem = GetEnhancedInputSubsystem();
+	if (!Subsystem) return;
+
+	const bool bWantsToLook = Input.Get<bool>();
+
+	if (bWantsToLook)
+	{
+		Subsystem->AddMappingContext(AimMappingContext, 1);
+	}
+	else
+	{
+		Subsystem->RemoveMappingContext(AimMappingContext);
+	}
+}
+
 void AMainPlayerController::Jump(const FInputActionValue& Input)
 {
 	if (!Character) return;
@@ -99,13 +125,15 @@ void AMainPlayerController::Sprint(const FInputActionValue& Input)
 
 	const bool bIsSprinting = Input.Get<bool>();
 
-	if (bIsSprinting) 
+	if (bIsSprinting)
 	{
 		CharacterMovement->StartSprinting();
+		OnSprintStarted.Broadcast();
 	}
 
 	if (!bIsSprinting)
 	{
 		CharacterMovement->StopSprinting();
+		OnSprintEnded.Broadcast();
 	}
 }
