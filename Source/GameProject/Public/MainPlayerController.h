@@ -26,9 +26,13 @@ public:
 	virtual void SetPawn(APawn* InPawn) override;
 protected:
 	virtual void SetupInputComponent() override;
+	virtual void BeginPlay() override;
 
 protected:
 	virtual UEnhancedInputLocalPlayerSubsystem* GetEnhancedInputSubsystem();
+
+protected:
+	virtual void SetMouseCursorVisible(bool bIsVisible);
 
 protected:
 	class AMainCharacter* Character = nullptr;

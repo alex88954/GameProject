@@ -45,11 +45,36 @@ void AMainPlayerController::SetupInputComponent()
 	EnhancedInputComponent->BindAction(IALook, ETriggerEvent::Triggered, this, &AMainPlayerController::Look);
 }
 
+void AMainPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+	SetMouseCursorVisible(true);
+}
+
 UEnhancedInputLocalPlayerSubsystem* AMainPlayerController::GetEnhancedInputSubsystem()
 {
 	UEnhancedInputLocalPlayerSubsystem* EnhancedPlayerSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
 	if (!EnhancedPlayerSubsystem) return nullptr;
 	return EnhancedPlayerSubsystem;
+}
+
+void AMainPlayerController::SetMouseCursorVisible(bool bIsVisible)
+{
+	bShowMouseCursor = bIsVisible;
+
+	if (bIsVisible)
+	{
+		FInputModeGameAndUI InputMode;
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
+		InputMode.SetHideCursorDuringCapture(false);
+		SetInputMode(InputMode);
+	}
+	else
+	{
+		FInputModeGameOnly InputMode;
+		InputMode.SetConsumeCaptureMouseDown(false);
+		SetInputMode(InputMode);
+	}
 }
 
 void AMainPlayerController::Move(const FInputActionValue& Input)
@@ -106,10 +131,12 @@ void AMainPlayerController::ActivateLook(const FInputActionValue& Input)
 	if (bWantsToLook)
 	{
 		Subsystem->AddMappingContext(AimMappingContext, 1);
+		SetMouseCursorVisible(false);
 	}
 	else
 	{
 		Subsystem->RemoveMappingContext(AimMappingContext);
+		SetMouseCursorVisible(true);
 	}
 }
 
